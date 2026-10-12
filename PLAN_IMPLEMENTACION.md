@@ -1,12 +1,10 @@
 # Plan de implementación — Challenge SIDOM
 
-Estado: plan preparado; implementación no iniciada. Los supuestos pendientes deben resolverse antes de implementar su comportamiento.
-
 ## 1. Objetivo y alcance
 
-Entregar una API pequeña en Node.js, TypeScript y NestJS, con arquitectura hexagonal, almacenamiento en memoria, Docker, OpenAPI/Swagger, Jest y colección Postman. Respetar el límite de 3 horas de la consigna y declarar cualquier exceso real. Registrar también el tiempo de preparación específica; no asumir que queda excluido.
+Entregar una API pequeña en Node.js, TypeScript y NestJS, con arquitectura hexagonal, almacenamiento en memoria, Docker, OpenAPI/Swagger, Jest y requests reproducibles con REST Client. Respetar el límite de 3 horas de la consigna y declarar cualquier exceso real. Registrar también el tiempo de preparación específica; no asumir que queda excluido.
 
-Operaciones: crear embarque con contenedores, agregar un ítem a un contenedor y consultar el embarque completo. Modelar las cuatro entidades, incluidos los documentos aduaneros.
+Operaciones: crear embarque con contenedores, agregar un ítem a un contenedor, consultar el embarque completo y listar embarques. Modelar las cuatro entidades, incluidos los documentos aduaneros.
 
 Fuera de alcance: SQLite u otra base persistente, autenticación, multitenencia, archivos adjuntos, integraciones COMEX, frontend, CRUD adicional, transiciones de estado, microservicios y despliegue público. La API será una demo local sin controles de acceso entre usuarios.
 
@@ -18,8 +16,8 @@ Fuera de alcance: SQLite u otra base persistente, autenticación, multitenencia,
 - Arquitectura hexagonal.
 - Almacenamiento en memoria: los cambios se pierden al reiniciar.
 - Ejecución con Docker, contrato OpenAPI y Swagger UI.
-- Tests Jest y set de requests Postman.
-- Raíz del proyecto: `Challenge/`.
+- Tests Jest y set de requests REST Client.
+- Raíz del proyecto: `challenge_embarque/`.
 
 ### Decisiones confirmadas
 
@@ -29,7 +27,7 @@ Fuera de alcance: SQLite u otra base persistente, autenticación, multitenencia,
 
 ### Instrucciones para herramientas de IA
 
-`.github/copilot-instructions.md` no es un requisito del challenge. La guía específica para el agente vive en `AGENTS.md`, con reglas breves para reducir lecturas y contexto innecesarios. El README documenta el producto para el evaluador; este plan documenta las decisiones de implementación. No duplicar esos documentos dentro de cada prompt.
+La guía específica para el agente vive en `AGENTS.md`, con reglas breves para reducir lecturas y contexto innecesarios. El README documenta el producto para el evaluador; este plan documenta las decisiones de implementación. No duplicar esos documentos dentro de cada prompt.
 
 ### Fixture inicial de demo
 
@@ -79,7 +77,7 @@ El seed se ejecutará una sola vez durante el bootstrap de cada proceso, antes d
 }
 ```
 
-El fixture cubre un embarque con dos contenedores, un contenedor con ítems, otro vacío y los dos tipos de documento como metadatos. Postman debe consultar este embarque usando el ID estable, agregar un ítem al contenedor vacío y comprobar la respuesta. Los IDs generados para nuevas entidades deben ser dinámicos; el fixture no debe confundirse con datos persistidos.
+El fixture cubre un embarque con dos contenedores, un contenedor con ítems, otro vacío y los dos tipos de documento como metadatos. REST Client debe consultar este embarque usando el ID estable, agregar un ítem al contenedor vacío y comprobar la respuesta. Los IDs generados para nuevas entidades deben ser dinámicos; el fixture no debe confundirse con datos persistidos.
 
 ### Versiones compatibles fijadas
 
@@ -88,6 +86,7 @@ Para mantener una instalación reproducible se usará una línea estable y aline
 | Componente | Versión | Regla |
 |---|---:|---|
 | Node.js | `24.21.0` | Fija; también en `.nvmrc` y `node:24.21.0` del Dockerfile |
+| npm | `11.19.0` | Versión incluida en el entorno de desarrollo verificado |
 | `@nestjs/common` | `11.2.1` | Misma major y versión que el núcleo |
 | `@nestjs/core` | `11.2.1` | Misma major y versión que Common |
 | `@nestjs/platform-express` | `11.2.1` | Misma major y versión que Core |
@@ -95,10 +94,11 @@ Para mantener una instalación reproducible se usará una línea estable y aline
 | `@nestjs/swagger` | `11.2.x` | Misma major que Nest; fijar el patch disponible durante la instalación |
 | `@nestjs/cli` | `11.x` | Compatible con la major del framework |
 | TypeScript | `5.9.3` | Dependencia de desarrollo fijada, sin `latest` |
+| Jest | `29.7.0` | Compatible con `ts-jest 29.4.14`; evita depender del resolver nativo incorporado por Jest 30 en este entorno Windows |
 
 La elección de TypeScript `5.9.3` evita adoptar TypeScript 7 durante este challenge, aunque exista una versión más nueva, porque el starter oficial de Nest mantiene TypeScript 5.9.3 en su línea actual. Nest declara Node `>=20` en sus paquetes y la documentación actual exige Node `>=20.19` para ejecutar y `>=24.15` para los generadores en la línea 24; Node `24.21.0` cumple ambos requisitos. No mezclar Nest 10, 11 y 12 en el mismo `package.json`. Después de instalar, conservar `package-lock.json` y validar con `npm ls` que no haya versiones mayores duplicadas.
 
-### Supuestos de implementación propuestos
+### Decisiones de implementación
 
 - Cada embarque nace con uno o más contenedores; cada contenedor puede tener cero ítems.
 - La creación debe incluir exactamente un documento `COMMERCIAL_INVOICE` y uno `PACKING_LIST`; se rechazan documentos faltantes, duplicados o de tipo desconocido.
@@ -109,12 +109,86 @@ La elección de TypeScript `5.9.3` evita adoptar TypeScript 7 durante este chall
 - Un contenedor pertenece a un embarque; un ítem, a un contenedor; un documento, a un embarque.
 - Textos con límites explícitos y colecciones/cuerpo HTTP acotados. Elegir valores razonables, documentarlos y probar sus límites.
 
+Los límites concretos serán:
+
+| Dato | Regla |
+|---|---|
+| `origin`, `destination` | Texto recortado, entre 1 y 120 caracteres |
+| `containers` | Entre 1 y 50 elementos por creación |
+| `container.reference` | Texto recortado, entre 1 y 50 caracteres; no se exige unicidad porque no hay una regla de negocio que la justifique |
+| `documents` | Exactamente 2 elementos: uno de cada tipo permitido |
+| `document.reference` | Texto recortado, entre 1 y 100 caracteres |
+| `item.description` | Texto recortado, entre 1 y 200 caracteres |
+| `item.quantity` | Entero entre 1 y 1.000.000 |
+| IDs de ruta | UUID v4 |
+| Cuerpo HTTP | Máximo 100 KiB, configurado de forma explícita |
+
+Las cadenas compuestas solo por espacios se consideran vacías. No se normalizarán mayúsculas, ubicaciones ni referencias, fuera del recorte de espacios en los extremos. Los contenedores se crean vacíos: los ítems solo ingresan mediante la operación específica para agregarlos. Estas reglas son decisiones técnicas de acotación y no agregan semántica aduanera.
+
+### Configuración de ambiente y logs
+
+`NODE_ENV` admite `development`, `test` y `production`; si está ausente se usa `development`. El puerto se toma de `PORT` y por defecto es `3000`. Una configuración común debe seleccionar los niveles y el formato:
+
+| Ambiente | Niveles | Formato |
+|---|---|---|
+| `development` | `debug`, `log`, `warn`, `error` | Texto legible |
+| `test` | `warn`, `error` | Texto conciso |
+| `production` | `log`, `warn`, `error` | Una línea JSON por evento |
+
+Cada request tendrá un `requestId` generado por el servidor y propagado en `X-Request-Id`. El evento de cierre incluirá `requestId`, método, ruta, status y duración en milisegundos. No se registrarán cuerpos, documentos ni stack traces en respuestas. Un `NODE_ENV` desconocido impedirá el arranque para evitar una configuración ambigua.
+
+### Ejemplos de aceptación del contrato
+
+Crear un embarque:
+
+```http
+POST /shipments
+Content-Type: application/json
+
+{
+  "origin": "Buenos Aires, Argentina",
+  "destination": "Montevideo, Uruguay",
+  "containers": [
+    { "reference": "CONT-001" },
+    { "reference": "CONT-002" }
+  ],
+  "documents": [
+    { "type": "COMMERCIAL_INVOICE", "reference": "INV-2026-001" },
+    { "type": "PACKING_LIST", "reference": "PL-2026-001" }
+  ]
+}
+```
+
+Respuesta esperada: `201`, estado `CREATED`, UUIDs v4 generados por el servidor, los dos documentos y ambos contenedores con `items: []`.
+
+Agregar un ítem:
+
+```http
+POST /shipments/{shipmentId}/containers/{containerId}/items
+Content-Type: application/json
+
+{
+  "description": "Repuestos industriales",
+  "quantity": 24
+}
+```
+
+Respuesta esperada: `201` con `{ "id", "description", "quantity" }`. Una consulta posterior debe mostrar el ítem únicamente dentro del contenedor indicado.
+
+Consultar el agregado:
+
+```http
+GET /shipments/{shipmentId}
+```
+
+Respuesta esperada: `200` con `id`, `origin`, `destination`, `status`, `containers` y `documents`; todas las colecciones presentes, aunque estén vacías. Los ejemplos negativos prioritarios son los enumerados en la sección 7 y usarán el formato estable de error definido en la sección 5.
+
 ## 3. Modelo mínimo
 
 | Entidad | Campos propuestos |
 |---|---|
 | Shipment | id, origin, destination, status, containers, documents |
-| Container | id, items |
+| Container | id, reference, items |
 | CargoItem | id, description, quantity |
 | CustomsDocument | id, type, reference |
 
@@ -139,7 +213,7 @@ src/
     shipments.module.ts     # composición de dependencias Nest
   bootstrap/                # configuración HTTP compartida y seed si se acepta
 test/                       # integración HTTP
-postman/                    # colección y entorno local sin secretos
+rest-client/                # requests locales reproducibles sin secretos
 docs/                       # OpenAPI exportado
   AGENTS.md                # instrucciones específicas para el agente
 Dockerfile
@@ -175,6 +249,7 @@ Almacenar y devolver copias profundas de snapshots para impedir mutaciones por r
 | Método y ruta | Entrada | Salida |
 |---|---|---|
 | POST /shipments | origin, destination, containers; documents si se acepta | 201 y embarque creado |
+| GET /shipments | status opcional; limit y size opcionales | 200 y página de embarques |
 | POST /shipments/:shipmentId/containers/:containerId/items | description, quantity | 201 e ítem creado |
 | GET /shipments/:shipmentId | UUID | 200 y embarque completo |
 
@@ -183,7 +258,8 @@ La consulta incluye estado, contenedores, ítems y documentos, con arrays vacío
 - 400: cuerpo, identificador o regla de negocio inválidos, incluida duplicación de tipo documental dentro de la creación.
 - 404: embarque o contenedor inexistente, o contenedor ajeno al embarque de la ruta.
 - 500: error inesperado; respuesta sin stack ni detalles internos.
-- Formato estable de error: statusCode, code y message; detalles de validación cuando correspondan.
+- Formato estable de error: `statusCode` numérico, `code` estable en mayúsculas con guiones bajos, `message` legible y `details` opcional como array de mensajes de validación. No incluir timestamp, stack ni estructura interna del framework como parte del contrato.
+- Códigos mínimos: `VALIDATION_ERROR` para forma, UUID o límites inválidos; `BUSINESS_RULE_VIOLATION` para invariantes del agregado; `SHIPMENT_NOT_FOUND`; `CONTAINER_NOT_FOUND`, incluido un contenedor que no pertenece al embarque indicado; e `INTERNAL_ERROR` para fallos inesperados.
 - No incorporar 409 sin una regla de conflicto concreta.
 
 Validación HTTP global con whitelist, rechazo de propiedades desconocidas y validación anidada. Las invariantes también se protegen en el dominio, sin depender de los DTOs.
@@ -206,11 +282,11 @@ Aplicar `ValidationPipe` global con `transform: true`, `whitelist: true` y `forb
 
 El flujo debe ser explícito: `HTTP request → DTO validado → comando de aplicación → entidad/agregado de dominio → response DTO`. No aceptar directamente entidades de dominio desde el controlador ni devolver referencias mutables del repositorio. Documentar los DTOs con decoradores de Swagger para generar el mismo contrato que se ejecuta.
 
-## 6. Implementación paso a paso — presupuesto objetivo 180 minutos
+## 6. Implementación paso a paso
 
 Los tiempos son orientativos, no una garantía; incluyen todas las piezas solicitadas. Al agotarse el tiempo, documentar el estado real en vez de ocultar faltantes o extender silenciosamente el alcance.
 
-### Paso 1 — Decisiones y guía de trabajo (0–15 min)
+### Paso 1 — Decisiones y guía de trabajo
 
 - Resolver propuestas pendientes y registrar supuestos.
 - Mantener este plan como fuente principal de decisiones y `AGENTS.md` como guía operativa del agente, con alcance, arquitectura, reglas, comandos y criterio de finalización. No crear `.github/copilot-instructions.md`.
@@ -220,7 +296,7 @@ Los tiempos son orientativos, no una garantía; incluyen todas las piezas solici
 
 Criterio: no quedan ambigüedades bloqueantes de modelo o alcance.
 
-### Paso 2 — Base ejecutable y composición (15–30 min)
+### Paso 2 — Base ejecutable y composición
 
 - Inicializar NestJS con TypeScript estricto, npm y lockfile.
 - Fijar Node.js `24.21.0` en desarrollo, CI si se agrega y Docker; documentar la versión de npm incluida y verificarla con `node --version` antes de la entrega.
@@ -231,7 +307,7 @@ Criterio: no quedan ambigüedades bloqueantes de modelo o alcance.
 
 Criterio: compila y arranca; no introducir infraestructura extra.
 
-### Paso 3 — Dominio y memoria con tests (30–60 min)
+### Paso 3 — Dominio y memoria con tests
 
 - Implementar las cuatro entidades y reglas acordadas.
 - Escribir primero tests de invariantes relevantes y luego código mínimo.
@@ -241,7 +317,7 @@ Criterio: compila y arranca; no introducir infraestructura extra.
 
 Criterio: dominio probado sin Nest ni HTTP; almacenamiento aislado en cada test.
 
-### Paso 4 — Tres operaciones verticales (60–100 min)
+### Paso 4 — Operaciones
 
 - Implementar en orden CreateShipment, GetShipment y AddCargoItem, cada uno con su adaptador HTTP.
 - Mapear explícitamente DTO → entrada del caso de uso y resultado → respuesta.
@@ -250,7 +326,7 @@ Criterio: dominio probado sin Nest ni HTTP; almacenamiento aislado en cada test.
 
 Criterio: crear → agregar → consultar funciona; errores definidos son reproducibles.
 
-### Paso 5 — OpenAPI y Swagger (100–115 min)
+### Paso 5 — OpenAPI y Swagger
 
 - Describir solicitudes, respuestas anidadas, enums, restricciones, ejemplos y errores reales.
 - Publicar `/docs` y `/openapi.json`; exportar snapshot a docs.
@@ -258,7 +334,7 @@ Criterio: crear → agregar → consultar funciona; errores definidos son reprod
 
 Criterio: contrato generado válido y coherente con el comportamiento observado.
 
-### Paso 6 — Tests de integración (115–140 min)
+### Paso 6 — Tests de integración
 
 - Jest + Supertest contra la app real con almacenamiento en memoria, sin mockear todos los casos de uso.
 - Reutilizar la misma configuración de validación y errores del arranque.
@@ -268,25 +344,26 @@ Criterio: contrato generado válido y coherente con el comportamiento observado.
 
 Criterio: build, lint y tests relevantes pasan; no perseguir un porcentaje arbitrario de cobertura.
 
-### Paso 7 — Postman (140–155 min)
+### Paso 7 — REST Client
 
-- Exportar colección local y entorno con baseUrl; sin credenciales ni dependencia de un workspace remoto.
+- Preparar un archivo `.rest` local con `baseUrl`; sin credenciales ni dependencia de un workspace remoto.
 - Secuencia autónoma: crear embarque, capturar shipmentId/containerId, agregar ítem, consultar y comprobar contenido.
 - Añadir casos 400 y 404, incluido contenedor de otro embarque.
-- Assertions de estado, IDs, pertenencia y valores; no limitarse a status 200/201.
+- Verificar manualmente estados, IDs, pertenencia y valores en las respuestas; no limitarse a status 200/201.
 - Usar variables capturadas, no IDs de una ejecución anterior. Ejecutar dos veces para comprobar independencia.
-- Ejecutar con Postman CLI ya disponible: `postman collection run postman/Challenge.postman_collection.json -e postman/local.postman_environment.json`.
+- Ejecutar secuencialmente desde la extensión REST Client en VS Code los archivos `01-flujo-embarque.rest`, `02-listado-embarques.rest`, `03-pruebas-validaciones.rest` y `04-fixture-demo.rest`.
+- Incluir también el fixture fijo `11111111-1111-4111-8111-111111111111`, consultar sus contenedores estables, agregar un ítem al contenedor `...222` y verificar el agregado sin alterar el contenedor `...221`.
 
-Criterio: colección importable, reproducible y ejecutada localmente contra la API.
+Criterio: archivo `.rest` reproducible y ejecutado localmente contra la API.
 
-### Paso 8 — Docker, README y entrega (155–180 min)
+### Paso 8 — Docker, README
 
 - Ejecutar build y arranque desde cero con `docker compose up --build`.
-- Probar la colección contra el contenedor y revisar Swagger.
+- Probar los requests REST Client contra el contenedor y revisar Swagger.
 - Reiniciar y verificar pérdida de cambios; si hay seed, solo los ejemplos iniciales se restauran.
 - No configurar volumen de base de datos: el almacenamiento es RAM.
 - README de una página: comandos; modelado y decisiones; exclusiones; mejoras futuras; párrafo de IA; tiempo real y faltantes si existen.
-- Incluir acceso a Swagger, ejecución de tests/Postman y comportamiento al reiniciar dentro de instrucciones breves.
+- Incluir acceso a Swagger, ejecución de tests/REST Client y comportamiento al reiniciar dentro de instrucciones breves.
 - Revisar diff, secretos, lockfile y acceso del evaluador al repositorio cuando se prepare la entrega. No publicar ni enviar sin pedido.
 
 Criterio: otra persona puede arrancar con Docker, probar y entender las limitaciones siguiendo el README.
@@ -303,7 +380,7 @@ Criterio: otra persona puede arrancar con Docker, probar y entender las limitaci
 8. Rechazar tipos documentales desconocidos, duplicados o documentos con referencia vacía.
 9. Mutar una copia obtenida del repositorio no modifica lo guardado.
 10. Reiniciar elimina los cambios; la precarga vuelve a estar disponible.
-11. Postman, Swagger y Docker funcionan con los mismos endpoints y contrato.
+11. REST Client, Swagger y Docker funcionan con los mismos endpoints y contrato.
 
 ## 8. Flujo de trabajo con IA
 
@@ -311,11 +388,12 @@ Ask para aclarar dudas → Plan breve → Agent por operación vertical → ejec
 
 Las instrucciones estables deben ser breves, con referencias a archivos concretos. No duplicar este plan, el README y teoría de arquitectura dentro de cada prompt. Pedir cambios acotados, resultados de verificaciones y riesgos restantes. No generar abstracciones o dependencias adicionales sin necesidad concreta. Registrar contribuciones y correcciones reales para el párrafo de IA.
 
-## 9. Fuentes técnicas
+## 9. Endpoints operativos agregados
+
+Se agregan `GET /liveness` y `GET /readiness` como endpoints operativos mínimos. No representan operaciones del agregado `Shipment` ni amplían el modelo de negocio. `/liveness` confirma que el proceso atiende requests y `/readiness` confirma que el bootstrap de NestJS y el `ShipmentStore` en memoria están disponibles. Ambos responden `{ "status": "ok" }` cuando están disponibles; readiness responde `503` si el store no está disponible. No se incorporan checks de dependencias externas ni nuevas dependencias. Se documentan en OpenAPI, se prueban por HTTP y `/readiness` se usa en el healthcheck de Compose.
+
+## 10. Fuentes técnicas
 
 - [NestJS: custom providers](https://docs.nestjs.com/fundamentals/custom-providers)
 - [NestJS: OpenAPI](https://docs.nestjs.com/openapi/introduction)
 - [NestJS: testing](https://docs.nestjs.com/fundamentals/testing)
-- [Postman CLI: ejecución de colecciones](https://learning.postman.com/docs/postman-cli/postman-cli-run-collection)
-
-La consigna y el CV fueron analizados previamente en esta conversación. Las decisiones de este plan no agregan exigencias atribuidas a SIDOM.
