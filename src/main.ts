@@ -3,7 +3,13 @@ import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 
 import { AppModule } from './app.module';
-import { configureApplication, createLogger, getRuntimeConfig, seedStore } from './bootstrap';
+import {
+  configureApplication,
+  createLogger,
+  getRuntimeConfig,
+  seedStore,
+  setupOpenApi,
+} from './bootstrap';
 import { SHIPMENT_STORE } from './shipments/application/ports';
 import type { ShipmentStore } from './shipments/application/ports';
 
@@ -14,6 +20,7 @@ async function bootstrap(): Promise<void> {
   });
 
   configureApplication(app);
+  setupOpenApi(app);
   const store = app.get<ShipmentStore>(SHIPMENT_STORE);
   seedStore(store, config.seedEnabled);
   await app.listen(config.port, '0.0.0.0');

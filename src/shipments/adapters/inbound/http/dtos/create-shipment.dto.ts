@@ -6,24 +6,36 @@ import {
   IsNotEmpty,
   IsString,
   MaxLength,
+  MinLength,
   ValidateNested,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 import { CreateContainerDto } from './create-container.dto';
 import { CreateCustomsDocumentDto } from './create-customs-document.dto';
+import { MAX_ORIGIN_DESTINATION_LENGTH } from '../../../../domain';
 
 export class CreateShipmentDto {
-  @ApiProperty({ example: 'Buenos Aires, Argentina', maxLength: 120 })
+  @ApiProperty({
+    example: 'Buenos Aires, Argentina',
+    minLength: 1,
+    maxLength: MAX_ORIGIN_DESTINATION_LENGTH,
+  })
   @IsString()
   @IsNotEmpty()
-  @MaxLength(120)
+  @MinLength(1)
+  @MaxLength(MAX_ORIGIN_DESTINATION_LENGTH)
   public origin!: string;
 
-  @ApiProperty({ example: 'Montevideo, Uruguay', maxLength: 120 })
+  @ApiProperty({
+    example: 'Montevideo, Uruguay',
+    minLength: 1,
+    maxLength: MAX_ORIGIN_DESTINATION_LENGTH,
+  })
   @IsString()
   @IsNotEmpty()
-  @MaxLength(120)
+  @MinLength(1)
+  @MaxLength(MAX_ORIGIN_DESTINATION_LENGTH)
   public destination!: string;
 
   @ApiProperty({ type: [CreateContainerDto], minItems: 1, maxItems: 50 })

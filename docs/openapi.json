@@ -1,0 +1,511 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/shipments": {
+      "post": {
+        "operationId": "ShipmentsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateShipmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShipmentResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Crear un embarque con contenedores y documentos obligatorios",
+        "tags": [
+          "shipments"
+        ]
+      }
+    },
+    "/shipments/{shipmentId}": {
+      "get": {
+        "operationId": "ShipmentsController_get",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "required": true,
+            "in": "path",
+            "description": "UUID v4 del embarque",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShipmentResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Consultar un embarque completo",
+        "tags": [
+          "shipments"
+        ]
+      }
+    },
+    "/shipments/{shipmentId}/containers/{containerId}/items": {
+      "post": {
+        "operationId": "ShipmentsController_addItem",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "required": true,
+            "in": "path",
+            "description": "UUID v4 del embarque",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "name": "containerId",
+            "required": true,
+            "in": "path",
+            "description": "UUID v4 del contenedor",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddCargoItemDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CargoItemResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Agregar un ítem a un contenedor del embarque",
+        "tags": [
+          "shipments"
+        ]
+      }
+    },
+    "/liveness": {
+      "get": {
+        "operationId": "HealthController_liveness",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "status": "ok"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Comprobar que el proceso atiende requests",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/readiness": {
+      "get": {
+        "operationId": "HealthController_readiness",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "status": "ok"
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "El ShipmentStore no está disponible"
+          }
+        },
+        "summary": "Comprobar que la aplicación está lista",
+        "tags": [
+          "health"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Challenge SIDOM - Shipments API",
+    "description": "API local para gestionar embarques, contenedores, ítems y documentos aduaneros como metadatos.",
+    "version": "1.0.0",
+    "contact": {}
+  },
+  "tags": [
+    {
+      "name": "shipments",
+      "description": "Operaciones sobre el agregado Shipment"
+    },
+    {
+      "name": "health",
+      "description": "Endpoints operativos"
+    }
+  ],
+  "servers": [],
+  "components": {
+    "schemas": {
+      "CreateContainerDto": {
+        "type": "object",
+        "properties": {
+          "reference": {
+            "type": "string",
+            "example": "CONT-001",
+            "minLength": 1,
+            "maxLength": 50
+          }
+        },
+        "required": [
+          "reference"
+        ]
+      },
+      "CreateCustomsDocumentDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "COMMERCIAL_INVOICE",
+              "PACKING_LIST"
+            ],
+            "example": "COMMERCIAL_INVOICE"
+          },
+          "reference": {
+            "type": "string",
+            "example": "INV-2026-001",
+            "minLength": 1,
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "type",
+          "reference"
+        ]
+      },
+      "CreateShipmentDto": {
+        "type": "object",
+        "properties": {
+          "origin": {
+            "type": "string",
+            "example": "Buenos Aires, Argentina",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "destination": {
+            "type": "string",
+            "example": "Montevideo, Uruguay",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "containers": {
+            "minItems": 1,
+            "maxItems": 50,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateContainerDto"
+            }
+          },
+          "documents": {
+            "minItems": 2,
+            "maxItems": 2,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CreateCustomsDocumentDto"
+            }
+          }
+        },
+        "required": [
+          "origin",
+          "destination",
+          "containers",
+          "documents"
+        ]
+      },
+      "CargoItemResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "description": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "description",
+          "quantity"
+        ]
+      },
+      "ContainerResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CargoItemResponseDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "reference",
+          "items"
+        ]
+      },
+      "CustomsDocumentResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "COMMERCIAL_INVOICE",
+              "PACKING_LIST"
+            ]
+          },
+          "reference": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "reference"
+        ]
+      },
+      "ShipmentResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "origin": {
+            "type": "string"
+          },
+          "destination": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "CREATED"
+            ]
+          },
+          "containers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContainerResponseDto"
+            }
+          },
+          "documents": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CustomsDocumentResponseDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "origin",
+          "destination",
+          "status",
+          "containers",
+          "documents"
+        ]
+      },
+      "ErrorResponseDto": {
+        "type": "object",
+        "properties": {
+          "statusCode": {
+            "type": "number",
+            "example": 400
+          },
+          "code": {
+            "type": "string",
+            "example": "VALIDATION_ERROR"
+          },
+          "message": {
+            "type": "string",
+            "example": "Request validation failed"
+          },
+          "details": {
+            "example": [
+              "origin must not be empty"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "statusCode",
+          "code",
+          "message"
+        ]
+      },
+      "AddCargoItemDto": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "example": "Repuestos industriales",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "quantity": {
+            "type": "number",
+            "example": 24,
+            "minimum": 1,
+            "maximum": 1000000
+          }
+        },
+        "required": [
+          "description",
+          "quantity"
+        ]
+      }
+    }
+  }
+}

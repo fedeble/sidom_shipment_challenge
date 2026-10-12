@@ -3,7 +3,7 @@ export const MAX_ORIGIN_DESTINATION_LENGTH = 120;
 export const MAX_CONTAINER_REFERENCE_LENGTH = 50;
 export const MAX_DOCUMENT_REFERENCE_LENGTH = 100;
 export const MAX_ITEM_DESCRIPTION_LENGTH = 200;
-export const MAX_ITEM_QUANTITY = 1_000_000;
+export const MAX_ITEM_QUANTITY = 1000000;
 
 export enum ShipmentStatus {
   CREATED = 'CREATED',

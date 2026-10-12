@@ -8,7 +8,16 @@ import {
   ParseUUIDPipe,
   Post,
 } from '@nestjs/common';
-import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiCreatedResponse,
+  ApiInternalServerErrorResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+} from '@nestjs/swagger';
 
 import {
   AddCargoItemUseCase,
@@ -20,6 +29,7 @@ import {
   AddCargoItemDto,
   CargoItemResponseDto,
   CreateShipmentDto,
+  ErrorResponseDto,
   ShipmentResponseDto,
 } from './dtos';
 
@@ -34,7 +44,10 @@ export class ShipmentsController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Crear un embarque con contenedores y documentos obligatorios' })
   @ApiCreatedResponse({ type: ShipmentResponseDto })
+  @ApiBadRequestResponse({ type: ErrorResponseDto })
+  @ApiInternalServerErrorResponse({ type: ErrorResponseDto })
   public create(@Body() body: CreateShipmentDto): ShipmentResponseDto {
     const snapshot = this.createShipment.execute({
       origin: body.origin,
@@ -50,7 +63,12 @@ export class ShipmentsController {
   }
 
   @Get(':shipmentId')
+  @ApiOperation({ summary: 'Consultar un embarque completo' })
+  @ApiParam({ name: 'shipmentId', format: 'uuid', description: 'UUID v4 del embarque' })
   @ApiOkResponse({ type: ShipmentResponseDto })
+  @ApiBadRequestResponse({ type: ErrorResponseDto })
+  @ApiNotFoundResponse({ type: ErrorResponseDto })
+  @ApiInternalServerErrorResponse({ type: ErrorResponseDto })
   public get(
     @Param('shipmentId', new ParseUUIDPipe({ version: '4' })) shipmentId: string,
   ): ShipmentResponseDto {
@@ -59,7 +77,13 @@ export class ShipmentsController {
 
   @Post(':shipmentId/containers/:containerId/items')
   @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Agregar un ítem a un contenedor del embarque' })
+  @ApiParam({ name: 'shipmentId', format: 'uuid', description: 'UUID v4 del embarque' })
+  @ApiParam({ name: 'containerId', format: 'uuid', description: 'UUID v4 del contenedor' })
   @ApiCreatedResponse({ type: CargoItemResponseDto })
+  @ApiBadRequestResponse({ type: ErrorResponseDto })
+  @ApiNotFoundResponse({ type: ErrorResponseDto })
+  @ApiInternalServerErrorResponse({ type: ErrorResponseDto })
   public addItem(
     @Param('shipmentId', new ParseUUIDPipe({ version: '4' })) shipmentId: string,
     @Param('containerId', new ParseUUIDPipe({ version: '4' })) containerId: string,
