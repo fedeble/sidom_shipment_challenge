@@ -6,7 +6,7 @@ Antes de analizar, modificar o verificar cualquier archivo, leer siempre `PLAN_I
 
 ## Objetivo
 
-Implementar la API según `PLAN_IMPLEMENTACION.md`, respetando Node.js `24.21.0`, NestJS, TypeScript, arquitectura hexagonal, almacenamiento en memoria, Docker, OpenAPI/Swagger, Jest y Postman.
+Implementar la API según `PLAN_IMPLEMENTACION.md`, respetando Node.js `24.21.0`, NestJS, TypeScript, arquitectura hexagonal, almacenamiento en memoria, Docker, OpenAPI/Swagger, Jest y REST Client.
 
 ## Ahorro de tokens y contexto
 
@@ -44,17 +44,17 @@ Una vez creado el proyecto en el paso 2, conservar scripts npm para estas compro
 - `npm run test:e2e`: ejecutar integración HTTP.
 - `npm run openapi:export`: actualizar `docs/openapi.json` desde la aplicación.
 - `docker compose up --build`: construir y arrancar la imagen final.
-- `postman collection run postman/Challenge.postman_collection.json -e postman/local.postman_environment.json`: ejecutar la colección local.
+- Abrir `rest-client/Challenge.rest` en VS Code y ejecutar sus requests secuencialmente con la extensión REST Client.
 
 Si durante el scaffolding cambia justificadamente un nombre de script, actualizar esta sección y el README en la misma iteración.
 
 ## Verificación
 
 - Ejecutar después de cada cambio solo las comprobaciones afectadas.
-- Antes de entregar, ejecutar build, lint, Jest, Docker y Postman según los scripts disponibles.
+- Antes de entregar, ejecutar build, lint, Jest, Docker y los requests REST Client según las herramientas disponibles.
 - Informar comandos, resultado y limitaciones.
 - No inventar requisitos del dominio; registrar supuestos en el plan o README.
 
 ## Criterio de finalización
 
-Una tarea está terminada cuando el cambio cumple el paso correspondiente del plan, pasan las comprobaciones afectadas y no quedan archivos generados o decisiones sin documentar. La entrega completa requiere build, lint, Jest unitario y HTTP, exportación OpenAPI actualizada, arranque con Docker y colección Postman ejecutada contra el contenedor. La revisión humana final del diff y del registro de uso de IA permanece explícitamente a cargo del responsable de la entrega.
+Una tarea está terminada cuando el cambio cumple el paso correspondiente del plan, pasan las comprobaciones afectadas y no quedan archivos generados o decisiones sin documentar. La entrega completa requiere build, lint, Jest unitario y HTTP, exportación OpenAPI actualizada, arranque con Docker y requests REST Client ejecutados contra el contenedor. La revisión humana final del diff y del registro de uso de IA permanece explícitamente a cargo del responsable de la entrega.

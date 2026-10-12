@@ -13,6 +13,10 @@ export class InMemoryShipmentStore implements ShipmentStore {
     return snapshot === undefined ? undefined : cloneSnapshot(snapshot);
   }
 
+  public count(): number {
+    return this.shipments.size;
+  }
+
   public save(snapshot: ShipmentSnapshot): void {
     const validated = Shipment.fromSnapshot(snapshot).toSnapshot();
     this.shipments.set(validated.id, cloneSnapshot(validated));

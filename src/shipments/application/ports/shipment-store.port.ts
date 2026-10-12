@@ -4,6 +4,7 @@ export type ShipmentSnapshotUpdater = (current: ShipmentSnapshot) => ShipmentSna
 
 export interface ShipmentStore {
   get(shipmentId: string): ShipmentSnapshot | undefined;
+  count(): number;
   save(shipment: ShipmentSnapshot): void;
   update(shipmentId: string, updater: ShipmentSnapshotUpdater): ShipmentSnapshot | undefined;
   clear(): void;
