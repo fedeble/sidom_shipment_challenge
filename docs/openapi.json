@@ -3,7 +3,8 @@
   "paths": {
     "/shipments": {
       "post": {
-        "operationId": "ShipmentsController_create",
+        "description": "Crea un embarque en memoria con contenedores y exactamente una factura comercial y un packing list.",
+        "operationId": "createShipment",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -11,13 +12,36 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/CreateShipmentDto"
+              },
+              "examples": {
+                "shipment": {
+                  "value": {
+                    "origin": "Buenos Aires, Argentina",
+                    "destination": "Montevideo, Uruguay",
+                    "containers": [
+                      {
+                        "reference": "CONT-001"
+                      }
+                    ],
+                    "documents": [
+                      {
+                        "type": "COMMERCIAL_INVOICE",
+                        "reference": "INV-2026-001"
+                      },
+                      {
+                        "type": "PACKING_LIST",
+                        "reference": "PL-2026-001"
+                      }
+                    ]
+                  }
+                }
               }
             }
           }
         },
         "responses": {
           "201": {
-            "description": "",
+            "description": "Embarque creado con estado CREATED.",
             "content": {
               "application/json": {
                 "schema": {
@@ -27,7 +51,7 @@
             }
           },
           "400": {
-            "description": "",
+            "description": "El cuerpo no cumple las validaciones o reglas de negocio.",
             "content": {
               "application/json": {
                 "schema": {
@@ -37,7 +61,7 @@
             }
           },
           "500": {
-            "description": "",
+            "description": "Error inesperado sin detalles internos.",
             "content": {
               "application/json": {
                 "schema": {
@@ -47,7 +71,8 @@
             }
           }
         },
-        "summary": "Crear un embarque con contenedores y documentos obligatorios",
+        "security": [],
+        "summary": "Crear un embarque",
         "tags": [
           "shipments"
         ]
@@ -55,7 +80,8 @@
     },
     "/shipments/{shipmentId}": {
       "get": {
-        "operationId": "ShipmentsController_get",
+        "description": "Devuelve el agregado completo, incluidos contenedores, ítems y documentos.",
+        "operationId": "getShipment",
         "parameters": [
           {
             "name": "shipmentId",
@@ -70,7 +96,7 @@
         ],
         "responses": {
           "200": {
-            "description": "",
+            "description": "Embarque encontrado.",
             "content": {
               "application/json": {
                 "schema": {
@@ -80,7 +106,7 @@
             }
           },
           "400": {
-            "description": "",
+            "description": "El identificador no es un UUID v4 válido.",
             "content": {
               "application/json": {
                 "schema": {
@@ -90,7 +116,7 @@
             }
           },
           "404": {
-            "description": "",
+            "description": "No existe un embarque con ese identificador.",
             "content": {
               "application/json": {
                 "schema": {
@@ -100,7 +126,7 @@
             }
           },
           "500": {
-            "description": "",
+            "description": "Error inesperado sin detalles internos.",
             "content": {
               "application/json": {
                 "schema": {
@@ -110,7 +136,8 @@
             }
           }
         },
-        "summary": "Consultar un embarque completo",
+        "security": [],
+        "summary": "Consultar un embarque",
         "tags": [
           "shipments"
         ]
@@ -118,7 +145,8 @@
     },
     "/shipments/{shipmentId}/containers/{containerId}/items": {
       "post": {
-        "operationId": "ShipmentsController_addItem",
+        "description": "Agrega un ítem al contenedor indicado y valida su pertenencia al embarque.",
+        "operationId": "addCargoItem",
         "parameters": [
           {
             "name": "shipmentId",
@@ -147,13 +175,21 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/AddCargoItemDto"
+              },
+              "examples": {
+                "item": {
+                  "value": {
+                    "description": "Repuestos industriales",
+                    "quantity": 24
+                  }
+                }
               }
             }
           }
         },
         "responses": {
           "201": {
-            "description": "",
+            "description": "Ítem agregado al contenedor.",
             "content": {
               "application/json": {
                 "schema": {
@@ -163,7 +199,7 @@
             }
           },
           "400": {
-            "description": "",
+            "description": "El cuerpo o un identificador no es válido.",
             "content": {
               "application/json": {
                 "schema": {
@@ -173,7 +209,7 @@
             }
           },
           "404": {
-            "description": "",
+            "description": "No existe el embarque o el contenedor no le pertenece.",
             "content": {
               "application/json": {
                 "schema": {
@@ -183,7 +219,7 @@
             }
           },
           "500": {
-            "description": "",
+            "description": "Error inesperado sin detalles internos.",
             "content": {
               "application/json": {
                 "schema": {
@@ -193,7 +229,8 @@
             }
           }
         },
-        "summary": "Agregar un ítem a un contenedor del embarque",
+        "security": [],
+        "summary": "Agregar un ítem",
         "tags": [
           "shipments"
         ]
@@ -201,11 +238,12 @@
     },
     "/liveness": {
       "get": {
-        "operationId": "HealthController_liveness",
+        "description": "Confirma que el proceso está atendiendo solicitudes.",
+        "operationId": "getLiveness",
         "parameters": [],
         "responses": {
           "200": {
-            "description": "",
+            "description": "El proceso está disponible.",
             "content": {
               "application/json": {
                 "schema": {
@@ -215,9 +253,13 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "El proceso no pudo atender la solicitud."
           }
         },
-        "summary": "Comprobar que el proceso atiende requests",
+        "security": [],
+        "summary": "Comprobar disponibilidad del proceso",
         "tags": [
           "health"
         ]
@@ -225,11 +267,12 @@
     },
     "/readiness": {
       "get": {
-        "operationId": "HealthController_readiness",
+        "description": "Confirma que NestJS y el almacenamiento en memoria están disponibles.",
+        "operationId": "getReadiness",
         "parameters": [],
         "responses": {
           "200": {
-            "description": "",
+            "description": "La aplicación está lista.",
             "content": {
               "application/json": {
                 "schema": {
@@ -244,7 +287,8 @@
             "description": "El ShipmentStore no está disponible"
           }
         },
-        "summary": "Comprobar que la aplicación está lista",
+        "security": [],
+        "summary": "Comprobar preparación de la aplicación",
         "tags": [
           "health"
         ]
@@ -267,7 +311,12 @@
       "description": "Endpoints operativos"
     }
   ],
-  "servers": [],
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Desarrollo local"
+    }
+  ],
   "components": {
     "schemas": {
       "CreateContainerDto": {
@@ -351,13 +400,16 @@
         "properties": {
           "id": {
             "type": "string",
-            "format": "uuid"
+            "format": "uuid",
+            "description": "UUID v4 generado por el servidor."
           },
           "description": {
-            "type": "string"
+            "type": "string",
+            "description": "Descripción del ítem."
           },
           "quantity": {
-            "type": "number"
+            "type": "number",
+            "description": "Cantidad de unidades."
           }
         },
         "required": [
@@ -371,10 +423,12 @@
         "properties": {
           "id": {
             "type": "string",
-            "format": "uuid"
+            "format": "uuid",
+            "description": "UUID v4 del contenedor."
           },
           "reference": {
-            "type": "string"
+            "type": "string",
+            "description": "Referencia externa del contenedor."
           },
           "items": {
             "type": "array",
@@ -394,7 +448,8 @@
         "properties": {
           "id": {
             "type": "string",
-            "format": "uuid"
+            "format": "uuid",
+            "description": "UUID v4 del documento."
           },
           "type": {
             "type": "string",
@@ -404,7 +459,8 @@
             ]
           },
           "reference": {
-            "type": "string"
+            "type": "string",
+            "description": "Referencia del documento aduanero."
           }
         },
         "required": [
@@ -418,19 +474,23 @@
         "properties": {
           "id": {
             "type": "string",
-            "format": "uuid"
+            "format": "uuid",
+            "description": "UUID v4 del embarque."
           },
           "origin": {
-            "type": "string"
+            "type": "string",
+            "description": "Lugar de origen."
           },
           "destination": {
-            "type": "string"
+            "type": "string",
+            "description": "Lugar de destino."
           },
           "status": {
             "type": "string",
             "enum": [
               "CREATED"
-            ]
+            ],
+            "description": "Estado asignado por el servidor."
           },
           "containers": {
             "type": "array",
@@ -507,5 +567,9 @@
         ]
       }
     }
+  },
+  "externalDocs": {
+    "description": "Guía del proyecto",
+    "url": "https://github.com/sidom/challenge-embarque#readme"
   }
 }

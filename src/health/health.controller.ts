@@ -2,6 +2,7 @@ import { Controller, Get, Inject, ServiceUnavailableException } from '@nestjs/co
 import {
   ApiOkResponse,
   ApiOperation,
+  ApiResponse,
   ApiServiceUnavailableResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -14,15 +15,32 @@ export class HealthController {
   constructor(@Inject(SHIPMENT_STORE) private readonly store: ShipmentStore) {}
 
   @Get('liveness')
-  @ApiOperation({ summary: 'Comprobar que el proceso atiende requests' })
-  @ApiOkResponse({ schema: { example: { status: 'ok' } } })
+  @ApiOperation({
+    operationId: 'getLiveness',
+    summary: 'Comprobar disponibilidad del proceso',
+    description: 'Confirma que el proceso está atendiendo solicitudes.',
+    security: [],
+  })
+  @ApiOkResponse({
+    description: 'El proceso está disponible.',
+    schema: { example: { status: 'ok' } },
+  })
+  @ApiResponse({ status: 500, description: 'El proceso no pudo atender la solicitud.' })
   liveness(): { status: 'ok' } {
     return { status: 'ok' };
   }
 
   @Get('readiness')
-  @ApiOperation({ summary: 'Comprobar que la aplicación está lista' })
-  @ApiOkResponse({ schema: { example: { status: 'ok' } } })
+  @ApiOperation({
+    operationId: 'getReadiness',
+    summary: 'Comprobar preparación de la aplicación',
+    description: 'Confirma que NestJS y el almacenamiento en memoria están disponibles.',
+    security: [],
+  })
+  @ApiOkResponse({
+    description: 'La aplicación está lista.',
+    schema: { example: { status: 'ok' } },
+  })
   @ApiServiceUnavailableResponse({ description: 'El ShipmentStore no está disponible' })
   readiness(): { status: 'ok' } {
     if (!this.store) {

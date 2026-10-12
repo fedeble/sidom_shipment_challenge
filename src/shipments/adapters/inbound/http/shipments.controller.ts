@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
+  ApiBody,
   ApiCreatedResponse,
   ApiInternalServerErrorResponse,
   ApiNotFoundResponse,
@@ -44,10 +45,41 @@ export class ShipmentsController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Crear un embarque con contenedores y documentos obligatorios' })
-  @ApiCreatedResponse({ type: ShipmentResponseDto })
-  @ApiBadRequestResponse({ type: ErrorResponseDto })
-  @ApiInternalServerErrorResponse({ type: ErrorResponseDto })
+  @ApiOperation({
+    operationId: 'createShipment',
+    summary: 'Crear un embarque',
+    description:
+      'Crea un embarque en memoria con contenedores y exactamente una factura comercial y un packing list.',
+    security: [],
+  })
+  @ApiBody({
+    type: CreateShipmentDto,
+    examples: {
+      shipment: {
+        value: {
+          origin: 'Buenos Aires, Argentina',
+          destination: 'Montevideo, Uruguay',
+          containers: [{ reference: 'CONT-001' }],
+          documents: [
+            { type: 'COMMERCIAL_INVOICE', reference: 'INV-2026-001' },
+            { type: 'PACKING_LIST', reference: 'PL-2026-001' },
+          ],
+        },
+      },
+    },
+  })
+  @ApiCreatedResponse({
+    description: 'Embarque creado con estado CREATED.',
+    type: ShipmentResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'El cuerpo no cumple las validaciones o reglas de negocio.',
+    type: ErrorResponseDto,
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Error inesperado sin detalles internos.',
+    type: ErrorResponseDto,
+  })
   public create(@Body() body: CreateShipmentDto): ShipmentResponseDto {
     const snapshot = this.createShipment.execute({
       origin: body.origin,
@@ -63,12 +95,26 @@ export class ShipmentsController {
   }
 
   @Get(':shipmentId')
-  @ApiOperation({ summary: 'Consultar un embarque completo' })
+  @ApiOperation({
+    operationId: 'getShipment',
+    summary: 'Consultar un embarque',
+    description: 'Devuelve el agregado completo, incluidos contenedores, ítems y documentos.',
+    security: [],
+  })
   @ApiParam({ name: 'shipmentId', format: 'uuid', description: 'UUID v4 del embarque' })
-  @ApiOkResponse({ type: ShipmentResponseDto })
-  @ApiBadRequestResponse({ type: ErrorResponseDto })
-  @ApiNotFoundResponse({ type: ErrorResponseDto })
-  @ApiInternalServerErrorResponse({ type: ErrorResponseDto })
+  @ApiOkResponse({ description: 'Embarque encontrado.', type: ShipmentResponseDto })
+  @ApiBadRequestResponse({
+    description: 'El identificador no es un UUID v4 válido.',
+    type: ErrorResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'No existe un embarque con ese identificador.',
+    type: ErrorResponseDto,
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Error inesperado sin detalles internos.',
+    type: ErrorResponseDto,
+  })
   public get(
     @Param('shipmentId', new ParseUUIDPipe({ version: '4' })) shipmentId: string,
   ): ShipmentResponseDto {
@@ -77,13 +123,31 @@ export class ShipmentsController {
 
   @Post(':shipmentId/containers/:containerId/items')
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Agregar un ítem a un contenedor del embarque' })
+  @ApiOperation({
+    operationId: 'addCargoItem',
+    summary: 'Agregar un ítem',
+    description: 'Agrega un ítem al contenedor indicado y valida su pertenencia al embarque.',
+    security: [],
+  })
+  @ApiBody({
+    type: AddCargoItemDto,
+    examples: { item: { value: { description: 'Repuestos industriales', quantity: 24 } } },
+  })
   @ApiParam({ name: 'shipmentId', format: 'uuid', description: 'UUID v4 del embarque' })
   @ApiParam({ name: 'containerId', format: 'uuid', description: 'UUID v4 del contenedor' })
-  @ApiCreatedResponse({ type: CargoItemResponseDto })
-  @ApiBadRequestResponse({ type: ErrorResponseDto })
-  @ApiNotFoundResponse({ type: ErrorResponseDto })
-  @ApiInternalServerErrorResponse({ type: ErrorResponseDto })
+  @ApiCreatedResponse({ description: 'Ítem agregado al contenedor.', type: CargoItemResponseDto })
+  @ApiBadRequestResponse({
+    description: 'El cuerpo o un identificador no es válido.',
+    type: ErrorResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'No existe el embarque o el contenedor no le pertenece.',
+    type: ErrorResponseDto,
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Error inesperado sin detalles internos.',
+    type: ErrorResponseDto,
+  })
   public addItem(
     @Param('shipmentId', new ParseUUIDPipe({ version: '4' })) shipmentId: string,
     @Param('containerId', new ParseUUIDPipe({ version: '4' })) containerId: string,
