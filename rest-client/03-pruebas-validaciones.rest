@@ -1,0 +1,33 @@
+@baseUrl = http://127.0.0.1:3000
+
+### 01 - Rechazar estado desconocido en listado (esperado: 400, VALIDATION_ERROR)
+GET {{baseUrl}}/shipments?status=IN_TRANSIT
+
+### 02 - Rechazar limit fuera de rango (esperado: 400, VALIDATION_ERROR)
+GET {{baseUrl}}/shipments?limit=101
+
+### 03 - Rechazar size cero (esperado: 400, VALIDATION_ERROR)
+GET {{baseUrl}}/shipments?size=0
+
+### 04 - Rechazar parámetros no numéricos (esperado: 400, VALIDATION_ERROR)
+GET {{baseUrl}}/shipments?limit=abc&size=first
+
+### 05 - Rechazar creación sin contenedores (esperado: 400)
+POST {{baseUrl}}/shipments
+Content-Type: application/json
+
+{
+  "origin": "Buenos Aires, Argentina",
+  "destination": "Montevideo, Uruguay",
+  "containers": [],
+  "documents": [
+    { "type": "COMMERCIAL_INVOICE", "reference": "INV-REST-INVALID" },
+    { "type": "PACKING_LIST", "reference": "PL-REST-INVALID" }
+  ]
+}
+
+### 06 - Responder 404 para embarque inexistente (esperado: SHIPMENT_NOT_FOUND)
+GET {{baseUrl}}/shipments/99999999-9999-4999-8999-999999999999
+
+### 07 - Rechazar UUID inválido (esperado: 400, VALIDATION_ERROR)
+GET {{baseUrl}}/shipments/not-a-uuid

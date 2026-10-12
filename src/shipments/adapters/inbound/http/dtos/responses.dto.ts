@@ -54,3 +54,17 @@ export class ShipmentResponseDto {
   @ApiProperty({ type: [CustomsDocumentResponseDto] })
   public documents!: CustomsDocumentResponseDto[];
 }
+
+export class ShipmentListResponseDto {
+  @ApiProperty({ type: [ShipmentResponseDto] })
+  public data!: ShipmentResponseDto[];
+
+  @ApiProperty()
+  public total!: number;
+
+  @ApiProperty()
+  public limit!: number;
+
+  @ApiProperty()
+  public size!: number;
+}

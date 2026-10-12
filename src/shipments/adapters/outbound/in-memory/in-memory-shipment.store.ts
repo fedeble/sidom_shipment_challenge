@@ -2,7 +2,11 @@ import { Injectable } from '@nestjs/common';
 
 import { BusinessRuleError, Shipment } from '../../../domain';
 import type { ShipmentSnapshot } from '../../../domain';
-import type { ShipmentSnapshotUpdater, ShipmentStore } from '../../../application/ports';
+import type {
+  ShipmentListQuery,
+  ShipmentSnapshotUpdater,
+  ShipmentStore,
+} from '../../../application/ports';
 
 @Injectable()
 export class InMemoryShipmentStore implements ShipmentStore {
@@ -15,6 +19,17 @@ export class InMemoryShipmentStore implements ShipmentStore {
 
   public count(): number {
     return this.shipments.size;
+  }
+
+  public list(query: ShipmentListQuery): { data: ShipmentSnapshot[]; total: number } {
+    const filtered = [...this.shipments.values()].filter(
+      (shipment) => query.status === undefined || shipment.status === query.status,
+    );
+    const offset = (query.size - 1) * query.limit;
+    return {
+      data: filtered.slice(offset, offset + query.limit).map(cloneSnapshot),
+      total: filtered.length,
+    };
   }
 
   public save(snapshot: ShipmentSnapshot): void {

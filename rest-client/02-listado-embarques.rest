@@ -1,0 +1,19 @@
+@baseUrl = http://127.0.0.1:3000
+
+### 01 - Listar embarques sin filtros (esperado: 200)
+GET {{baseUrl}}/shipments
+
+### 02 - Listar embarques filtrados por estado (esperado: 200; solo CREATED)
+GET {{baseUrl}}/shipments?status=CREATED
+
+### 03 - Primera página con un elemento (esperado: 200; limit y size reflejados)
+GET {{baseUrl}}/shipments?limit=1&size=1
+
+### 04 - Segunda página con un elemento (esperado: 200; elemento distinto de la primera página)
+GET {{baseUrl}}/shipments?limit=1&size=2
+
+### 05 - Filtro y paginación combinados (esperado: 200)
+GET {{baseUrl}}/shipments?status=CREATED&limit=2&size=1
+
+### 06 - Listado sin resultados en una página posterior (esperado: 200; data vacía)
+GET {{baseUrl}}/shipments?limit=100&size=100

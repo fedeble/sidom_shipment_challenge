@@ -3,9 +3,11 @@ export { CreateContainerDto } from './create-container.dto';
 export { CreateCustomsDocumentDto } from './create-customs-document.dto';
 export { CreateShipmentDto } from './create-shipment.dto';
 export { ErrorResponseDto } from './error-response.dto';
+export { ListShipmentsQueryDto } from './list-shipments-query.dto';
 export {
   CargoItemResponseDto,
   ContainerResponseDto,
   CustomsDocumentResponseDto,
   ShipmentResponseDto,
+  ShipmentListResponseDto,
 } from './responses.dto';

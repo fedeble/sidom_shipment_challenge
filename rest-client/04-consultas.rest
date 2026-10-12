@@ -1,0 +1,22 @@
+@baseUrl = http://127.0.0.1:3000
+@demoShipmentId = 11111111-1111-4111-8111-111111111111
+@demoFilledContainerId = 22222222-2222-4222-8222-222222222221
+@demoEmptyContainerId = 22222222-2222-4222-8222-222222222222
+
+### 01 - Consultar fixture precargado (esperado: 200; dos contenedores y dos documentos)
+GET {{baseUrl}}/shipments/{{demoShipmentId}}
+
+### 02 - Listar y encontrar el fixture por estado (esperado: 200)
+GET {{baseUrl}}/shipments?status=CREATED&limit=20&size=1
+
+### 03 - Agregar ítem al contenedor vacío del fixture (esperado: 201)
+POST {{baseUrl}}/shipments/{{demoShipmentId}}/containers/{{demoEmptyContainerId}}/items
+Content-Type: application/json
+
+{
+  "description": "Item agregado desde REST Client",
+  "quantity": 3
+}
+
+### 04 - Verificar fixture después del agregado (esperado: 200)
+GET {{baseUrl}}/shipments/{{demoShipmentId}}

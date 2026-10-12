@@ -7,6 +7,7 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Query,
 } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
@@ -24,6 +25,7 @@ import {
   AddCargoItemUseCase,
   CreateShipmentUseCase,
   GetShipmentUseCase,
+  ListShipmentsUseCase,
 } from '../../../application';
 import { toShipmentResponse } from './shipment-response.mapper';
 import {
@@ -32,6 +34,8 @@ import {
   CreateShipmentDto,
   ErrorResponseDto,
   ShipmentResponseDto,
+  ListShipmentsQueryDto,
+  ShipmentListResponseDto,
 } from './dtos';
 
 @ApiTags('shipments')
@@ -41,6 +45,7 @@ export class ShipmentsController {
     private readonly createShipment: CreateShipmentUseCase,
     private readonly getShipment: GetShipmentUseCase,
     private readonly addCargoItem: AddCargoItemUseCase,
+    private readonly listShipments: ListShipmentsUseCase,
   ) {}
 
   @Post()
@@ -119,6 +124,33 @@ export class ShipmentsController {
     @Param('shipmentId', new ParseUUIDPipe({ version: '4' })) shipmentId: string,
   ): ShipmentResponseDto {
     return toShipmentResponse(this.getShipment.execute(shipmentId));
+  }
+
+  @Get()
+  @ApiOperation({
+    operationId: 'listShipments',
+    summary: 'Listar embarques',
+    description: 'Devuelve embarques almacenados en memoria, con filtro opcional y paginación.',
+    security: [],
+  })
+  @ApiOkResponse({ description: 'Página de embarques.', type: ShipmentListResponseDto })
+  @ApiBadRequestResponse({ description: 'Los parámetros no son válidos.', type: ErrorResponseDto })
+  @ApiInternalServerErrorResponse({
+    description: 'Error inesperado sin detalles internos.',
+    type: ErrorResponseDto,
+  })
+  public list(@Query() query: ListShipmentsQueryDto): ShipmentListResponseDto {
+    const result = this.listShipments.execute({
+      status: query.status,
+      limit: query.limit,
+      size: query.size,
+    });
+    return {
+      data: result.data.map(toShipmentResponse),
+      total: result.total,
+      limit: query.limit,
+      size: query.size,
+    };
   }
 
   @Post(':shipmentId/containers/:containerId/items')

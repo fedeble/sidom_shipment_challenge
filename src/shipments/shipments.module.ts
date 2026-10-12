@@ -1,7 +1,12 @@
 import { Module } from '@nestjs/common';
 
 import { SHIPMENT_STORE } from './application/ports';
-import { AddCargoItemUseCase, CreateShipmentUseCase, GetShipmentUseCase } from './application';
+import {
+  AddCargoItemUseCase,
+  CreateShipmentUseCase,
+  GetShipmentUseCase,
+  ListShipmentsUseCase,
+} from './application';
 import { ShipmentsController } from './adapters/inbound/http';
 import { InMemoryShipmentStore } from './adapters/outbound/in-memory/in-memory-shipment.store';
 
@@ -29,6 +34,12 @@ import { InMemoryShipmentStore } from './adapters/outbound/in-memory/in-memory-s
       provide: AddCargoItemUseCase,
       useFactory: (store: import('./application/ports').ShipmentStore): AddCargoItemUseCase =>
         new AddCargoItemUseCase(store),
+      inject: [SHIPMENT_STORE],
+    },
+    {
+      provide: ListShipmentsUseCase,
+      useFactory: (store: import('./application/ports').ShipmentStore): ListShipmentsUseCase =>
+        new ListShipmentsUseCase(store),
       inject: [SHIPMENT_STORE],
     },
   ],
