@@ -6,8 +6,11 @@
 ### 01 - Consultar fixture precargado (esperado: 200; dos contenedores y dos documentos)
 GET {{baseUrl}}/shipments/{{demoShipmentId}}
 
-### 02 - Listar y encontrar el fixture por estado (esperado: 200)
+### 02 - Listar y encontrar embarques por estado (esperado: 200)
 GET {{baseUrl}}/shipments?status=CREATED&limit=20&size=1
+
+### 03 - Listar y encontrar embarques (esperado: 200)
+GET {{baseUrl}}/shipments?limit=20&size=1
 
 ### 03 - Agregar ítem al contenedor vacío del fixture (esperado: 201)
 POST {{baseUrl}}/shipments/{{demoShipmentId}}/containers/{{demoEmptyContainerId}}/items

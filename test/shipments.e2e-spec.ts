@@ -27,6 +27,13 @@ interface OpenApiBody {
   readonly paths: Record<string, unknown>;
 }
 
+interface ShipmentListBody {
+  readonly data: readonly ShipmentBody[];
+  readonly total: number;
+  readonly limit: number;
+  readonly size: number;
+}
+
 describe('Shipments HTTP API', () => {
   let app: INestApplication;
 
@@ -204,6 +211,22 @@ describe('Shipments HTTP API', () => {
     expect(responses.map((response) => response.status)).toEqual([201, 201]);
     const finalResponse = await request(server).get(`/shipments/${shipment.id}`);
     expect((finalResponse.body as ShipmentBody).containers[0]?.items).toHaveLength(2);
+  });
+
+  it('lists shipments with numeric pagination query parameters', async () => {
+    const server = app.getHttpServer() as Server;
+    await createShipment(server);
+
+    const response = await request(server)
+      .get('/shipments')
+      .query({ status: 'CREATED', limit: 1, size: 1 });
+
+    expect(response.status).toBe(200);
+    const body = response.body as ShipmentListBody;
+    expect(body.total).toBeGreaterThanOrEqual(1);
+    expect(body.limit).toBe(1);
+    expect(body.size).toBe(1);
+    expect(body.data).toHaveLength(1);
   });
 
   it('exposes liveness and readiness endpoints', async () => {
